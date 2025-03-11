@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function sortTodosByPriority(todos) {
-        return todos.sort((a, b) => {
+        return todos.filter(todo => todo !== null).sort((a, b) => {
             const priorityA = getPriorityWeight(a.priority);
             const priorityB = getPriorityWeight(b.priority);
             
@@ -167,6 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function addTodoToDOM(todo) {
+        if (!todo || !todo.id) {
+            console.warn('Invalid to-do object:', todo);
+            return;
+        }
+
         const li = document.createElement('li');
         li.dataset.id = todo.id;
         li.draggable = true;
@@ -313,8 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateStats() {
         const todos = JSON.parse(localStorage.getItem('todos')) || [];
-        const totalTasks = todos.length;
-        const completedTasks = todos.filter(todo => todo.completed).length;
+        const validTodos = todos.filter(todo => todo !== null);
+        const totalTasks = validTodos.length;
+        const completedTasks = validTodos.filter(todo => todo && todo.completed).length;
         
         document.getElementById('total-tasks').textContent = `Total: ${totalTasks}`;
         document.getElementById('completed-tasks').textContent = `Completed: ${completedTasks}`;
@@ -333,9 +339,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filterTodos() {
         const todos = JSON.parse(localStorage.getItem('todos')) || [];
-        console.log('Current todos:', todos);
         todoList.innerHTML = '';
-        const filteredTodos = todos.filter(todo => shouldShowTodo(todo));
+        const filteredTodos = todos
+            .filter(todo => todo && shouldShowTodo(todo));
         const sortedTodos = sortTodosByPriority(filteredTodos);
         sortedTodos.forEach(todo => addTodoToDOM(todo));
     }
@@ -346,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             text: todo.text || '',
             completed: Boolean(todo.completed),
             priority: ['low', 'medium', 'high'].includes(todo.priority) ? todo.priority : 'low',
-            dueDate: todo.dueDate, // Add this line to save the dueDate
+            dueDate: todo.dueDate,
             createdAt: todo.createdAt || new Date().toISOString()
         };
         
@@ -385,7 +391,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     todoList.addEventListener('dragend', (e) => {
         e.target.classList.remove('dragging');
-        updateTodosOrder();
+        try {
+            updateTodosOrder();
+        } catch (error) {
+            console.warn('Error updating todo order:', error);
+            filterTodos();
+        }
     });
 
     todoList.addEventListener('dragover', (e) => {
@@ -400,16 +411,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateTodosOrder() {
-        const todos = Array.from(todoList.children).map(li => {
-            const id = li.dataset.id;
-            return getTodoFromStorage(id);
-        });
-        localStorage.setItem('todos', JSON.stringify(todos));
-    }
+        const storedTodos = JSON.parse(localStorage.getItem('todos')) || [];
+        
+        const newOrder = Array.from(todoList.children)
+            .map(li => {
+                const id = Number(li.dataset.id);
+                return storedTodos.find(todo => todo && todo.id === id) || null;
+            })
+            .filter(todo => todo !== null);
 
-    function getTodoFromStorage(id) {
-        const todos = JSON.parse(localStorage.getItem('todos')) || [];
-        return todos.find(todo => todo.id == id);
+        localStorage.setItem('todos', JSON.stringify(newOrder));
     }
 });
 
