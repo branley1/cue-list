@@ -1,5 +1,5 @@
 # Cue List App
-A modern, responsive, and easy-to-use task management app with priority-based sorting and deadline tracking to help you stay on top of your tasks.
+An easy-to-use task management app with priority-based sorting and deadline tracking to help you stay on top of your tasks.
 
 ## Features
 - Add, edit, and delete to-dos
