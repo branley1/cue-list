@@ -27,8 +27,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return todos.sort((a, b) => {
             const priorityA = getPriorityWeight(a.priority);
             const priorityB = getPriorityWeight(b.priority);
-            return priorityB - priorityA;
+            
+            if (priorityB !== priorityA) {
+                return priorityB - priorityA;
+            }
+
+            const dateA = a.dueDate ? new Date(a.dueDate) : new Date('9999-12-31');
+            const dateB = b.dueDate ? new Date(b.dueDate) : new Date('9999-12-31');
+            return dateA - dateB;
         });
+    }
+
+    function isPastDue(dueDate) {
+        if (!dueDate) return false;
+        return new Date(dueDate) < new Date();
+    }
+
+    function getMinDateTime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
     }
 
     const form = document.getElementById('todo-form');
@@ -57,17 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentFilter = 'all';
 
-    // Add after other const declarations
     const themeToggle = document.getElementById('theme-toggle');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     
-    // Initialize theme
     const currentTheme = localStorage.getItem('theme') || 
         (prefersDark.matches ? 'dark' : 'light');
     document.body.classList.add(`${currentTheme}-theme`);
     updateThemeIcon(currentTheme);
 
-    // Theme toggle handler
     themeToggle.addEventListener('click', () => {
         const isDark = document.body.classList.contains('dark-theme');
         const newTheme = isDark ? 'light' : 'dark';
@@ -87,21 +102,50 @@ document.addEventListener('DOMContentLoaded', () => {
     filterTodos();
     updateStats();
 
+    const dueDateInput = document.getElementById('due-date');
+    dueDateInput.min = getMinDateTime();
+
+    setInterval(() => {
+        dueDateInput.min = getMinDateTime();
+    }, 60000);
+
+    function isValidFutureDate(dateStr) {
+        if (!dateStr) return false;
+        const selectedDate = new Date(dateStr);
+        const now = new Date();
+        selectedDate.setSeconds(0, 0);
+        now.setSeconds(0, 0);
+        return selectedDate >= now;
+    }
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const newTodoText = input.value.trim();
-        console.log('Adding new todo:', newTodoText);
+        const dueDateValue = dueDateInput.value;
+        
         if (newTodoText !== '') {
+            if (!dueDateValue) {
+                showError('Please set a deadline for the task');
+                return;
+            }
+            
+            if (!isValidFutureDate(dueDateValue)) {
+                showError('Please set a deadline at least 1 minute in the future');
+                return;
+            }
+
             const newTodo = {
                 id: Date.now(),
                 text: newTodoText,
                 completed: false,
                 priority: prioritySelect.value,
+                dueDate: dueDateValue,
                 createdAt: new Date().toISOString()
             };
             saveTodoToLocalStorage(newTodo);
-            filterTodos();
+            filterTodos(); // Automatically sorts
             input.value = '';
+            dueDateInput.value = '';
             updateStats();
         }
     });
@@ -144,7 +188,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const dueDate = document.createElement('span');
         dueDate.className = 'due-date';
-        dueDate.textContent = todo.dueDate ? new Date(todo.dueDate).toLocaleString() : '';
+        if (todo.dueDate) {
+            const date = new Date(todo.dueDate);
+            dueDate.textContent = date.toLocaleString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            
+            if (isPastDue(todo.dueDate)) {
+                dueDate.classList.add('past-due');
+                text.classList.add('past-due');
+            }
+        }
         
         const actions = document.createElement('div');
         actions.className = 'todo-actions';
@@ -169,7 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dialog.innerHTML = `
                 <form method="dialog" class="edit-form">
                     <input type="text" value="${todo.text}" id="edit-text">
-                    <input type="datetime-local" value="${todo.dueDate || ''}" id="edit-date">
+                    <input type="datetime-local" value="${todo.dueDate || ''}" 
+                           id="edit-date" min="${getMinDateTime()}">
                     <select id="edit-priority">
                         <option value="low" ${todo.priority === 'low' ? 'selected' : ''}>Low</option>
                         <option value="medium" ${todo.priority === 'medium' ? 'selected' : ''}>Medium</option>
@@ -200,20 +259,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newPriority = dialog.querySelector('#edit-priority').value;
                 
                 if (newText !== '') {
+                    if (!newDate) {
+                        showError('Please set a deadline for the task');
+                        return;
+                    }
+                    
+                    if (!isValidFutureDate(newDate)) {
+                        showError('Please set a deadline at least 1 minute in the future');
+                        return;
+                    }
+
                     todo.text = newText;
                     todo.dueDate = newDate;
                     todo.priority = newPriority;
-
-                    text.textContent = newText;
-                    dueDate.textContent = newDate ? new Date(newDate).toLocaleString() : '';
-                    priority.textContent = newPriority;
-                    priority.className = `priority-badge priority-${newPriority}`;
                     
                     updateTodoInLocalStorage(todo);
+                    
                     dialog.close();
                     dialog.remove();
+
+                    filterTodos();
                 }
             });
+
+            const editDateInput = dialog.querySelector('#edit-date');
+            setInterval(() => {
+                editDateInput.min = getMinDateTime();
+            }, 60000);
         });
 
         todoContent.appendChild(checkbox);
@@ -274,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
             text: todo.text || '',
             completed: Boolean(todo.completed),
             priority: ['low', 'medium', 'high'].includes(todo.priority) ? todo.priority : 'low',
+            dueDate: todo.dueDate, // Add this line to save the dueDate
             createdAt: todo.createdAt || new Date().toISOString()
         };
         
@@ -345,3 +418,21 @@ window.addEventListener('error', function(e) {
         console.warn('Resource failed to load:', e.target.src || e.target.href);
     }
 }, true);
+
+function showError(message) {
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'error-message';
+    errorMsg.textContent = message;
+
+    const existingError = document.querySelector('.error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(errorMsg, container.firstChild);
+    
+    setTimeout(() => {
+        errorMsg.remove();
+    }, 3000);
+}

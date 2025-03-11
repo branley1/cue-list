@@ -310,6 +310,12 @@ input[type="checkbox"] {
     padding: 0.25rem 0.5rem;
     background: var(--due-date-bg);
     border-radius: 4px;
+    white-space: nowrap;
+}
+
+.due-date.past-due {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .theme-toggle {
@@ -323,6 +329,10 @@ input[type="checkbox"] {
 .theme-toggle:hover {
     background-color: var(--secondary-color);
     transform: none;
+}
+
+.past-due {
+    color: var(--danger-color) !important;
 }
 
 @media (max-width: 640px) {
@@ -466,4 +476,13 @@ dialog.edit-dialog::backdrop {
     background: var(--input-bg);
     color: var(--text-color);
     border-color: var(--border-color);
+}
+
+.dark-theme .past-due {
+    color: #ef4444 !important;
+}
+
+.dark-theme .due-date.past-due {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }

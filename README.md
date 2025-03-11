@@ -1,30 +1,23 @@
 # Cue List App
-
-A sleek and responsive to-do list application built with HTML, CSS, and JavaScript.
+A modern, responsive, and easy-to-use task management app with priority-based sorting and deadline tracking to help you stay on top of your tasks.
 
 ## Features
-
 - Add, edit, and delete to-dos
-- Priority levels (High, Medium, Low)
-- Filter to-dos by status
+- Intelligent sorting by priority (high, medium, low) and deadlines
+- Real-time deadline validation and alerts
+- Search and filter to-dos by status (all, active, done)
+- Dark/Light theme with system preference
 - Local storage persistence
-- Responsive design
-- Modern UI with smooth animations
+- Drag-and-drop reordering
 
-## Technologies Used
+## Tech Stack
 
-- HTML5
-- CSS3 (Custom properties, Flexbox)
-- JavaScript (ES6+)
-- Local Storage API
-- Font Awesome icons
-- Inter font family
+- HTML5, CSS3, JavaScript (ES6+), Local Storage API
 
 ## Getting Started
 
-1. Clone the repository
-2. Open `index.html` in your browser, alternatively run `python3 -m http.server 8000` to run on port `8000`. 
-3. Start managing your to-dos!
+1. Clone the repo.
+2. Open `index.html` in your browser (or run `python3 -m http.server 8000`).
 
 ## License
 MIT
