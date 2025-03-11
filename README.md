@@ -1,5 +1,9 @@
 # Cue List App
+[![Netlify Status](https://api.netlify.com/api/v1/badges/d72b0fd0-c106-49d8-aa94-9eea18ebacc6/deploy-status)](https://app.netlify.com/sites/cuelist/deploys)
+
 An easy-to-use task management app with priority-based sorting and deadline tracking to help me stay on top of my tasks.
+
+A version of this app can be accessed via: https://cuelist.netlify.app/
 
 ## Features
 - Add, edit, and delete to-dos
